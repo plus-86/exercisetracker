@@ -84,14 +84,14 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       data.count = 1
       data.save((err, dt) => {
         if (err) return console.log(err)
-        res.json(obj)
+        res.json(dt)
       })
     } else {
       data.logs.push(obj)
       data.count++
       data.save((err, dt) => {
         if (err) return console.log(err)
-        res.json(obj)
+        res.json(dt)
       })
     }
   })
