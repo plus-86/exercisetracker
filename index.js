@@ -84,14 +84,27 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       data.count = 1
       data.save((err, dt) => {
         if (err) return console.log(err)
-        res.json(dt)
+        res.json({
+          _id: dt._id.toString(),
+          username: dt.username,
+          date: obj.date,
+          duration: obj.duration,
+          description: obj.description
+        })
       })
     } else {
       data.logs.push(obj)
       data.count++
       data.save((err, dt) => {
         if (err) return console.log(err)
-        res.json(dt)
+        obj._id = dt._id.toString()
+        res.json({
+          _id: dt._id.toString(),
+          username: dt.username,
+          date: obj.date,
+          duration: obj.duration,
+          description: obj.description
+        })
       })
     }
   })
@@ -100,9 +113,43 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 // 获取用户exercise日志
 app.get('/api/users/:_id/logs', (req, resp) => {
   let id = req.params._id
+  console.log(id)
   // 查用户logs
-  Person.findById(id).exec((err, res) => {
-    if (err) return console.log(err)
-    resp.json({ count: res.count, log: res.logs })
-  })
+  if (req.query.from === undefined) {
+    // url没参数
+    Person.findById(id).exec((err, res) => {
+      if (err) return console.log(err)
+      resp.json({
+        _id: res._id.toString(),
+        username: res.username,
+        count: res.count,
+        log: res.logs
+      })
+    })
+  } else {
+    // url有参数
+    let from = req.query.from
+    let to = req.query.to
+    Person.findById(id).exec((err, res) => {
+      if (err) return console.log(err)
+      let log = []
+      for (let i in res.logs) {
+        if (
+          new Date(from).getTime() < parseInt(res.logs[i].timestamp) &&
+          new Date(to).getTime() > parseInt(res.logs[i].timestamp)
+        ) {
+          Reflect.deleteProperty(res.logs[i], 'timestamp')
+          log.push(res.logs[i])
+        }
+      }
+      resp.json({
+        _id: res._id.toString(),
+        username: res.username,
+        from: new Date(from).toDateString(),
+        to: new Date(to).toDateString(),
+        count: log.length,
+        log: log
+      })
+    })
+  }
 })
